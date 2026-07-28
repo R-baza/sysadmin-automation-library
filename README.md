@@ -20,8 +20,11 @@ sysadmin-automation-library/
 └── networking/        # Endpoint connectivity checks and data format validation
 
 🚀 Module Deep Dive
+
 🛡️ Security & Identity Auditing (/security)
 server_audit.py (Automated Host Intrusion Alerting): Streams active identity state changes by parsing /etc/passwd. Implements automated system-account filtering logic and hooks into Discord Webhook APIs to instantly trigger real-time host intrusion alerts if an unapproved user bypasses access management profiles.
+
+auth_log_summarizer.py (Authentication Event Aggregator): Parses system authentication logs to extract, categorize, and count event frequencies by process and message type, turning raw log data into clean, structured summaries for fast security auditing.
 
 log_reporter.py (Secure Authentication Log Pipeline): Ingests, processes, and structures raw system logs (/var/log/auth.log) to identify, track, and aggregate brute-force access attempts, outputting parsed results into isolated analytical datasets (failed_logins.csv).
 
@@ -29,6 +32,8 @@ ssh_audit.py & db_security_filter.py: Hardened auditing scripts designed to pars
 
 💾 Infrastructure & Resource Telemetry (/monitoring)
 system_health_report.py & disk_space_monitor.py: Leverages native OS tracking engines (shutil, psutil) to calculate partition allocations, memory states, and resource fatigue. Utilizes structured float-formatting to stream clean system warnings directly to communications channels when hardware thresholds cross safety bounds.
+
+disk_sentinel.py (Resource Health & Automated Cleanup Sentinel): Monitors root partition utilization and evaluates target log ages using native OS path and time modules. Safely logs and purges stale operational files when storage thresholds cross critical bounds, utilizing robust try-except error handling for low-overhead production maintenance.
 
 uptime_calculator.py: Tracks and exposes host availability profiles, aggregating runtime data into clean administrative metrics.
 
