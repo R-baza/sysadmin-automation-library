@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""
+Disk Space Sentinel & Log Cleanup Utility
+
+This script checks the system's root partition ("/") for available space. 
+If the disk drops below 20% free capacity, it evaluates inactive log files 
+(e.g., /var/log/auth.log.1). Files older than 24 hours are safely queued 
+for removal to prevent disk exhaustion while preserving recent log data.
+"""
 import shutil
 import time 
 import os   
