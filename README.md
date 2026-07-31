@@ -37,6 +37,10 @@ disk_sentinel.py (Resource Health & Automated Cleanup Sentinel): Monitors root p
 
 uptime_calculator.py: Tracks and exposes host availability profiles, aggregating runtime data into clean administrative metrics.
 
+disk_sentinel.py: Monitors root partition capacity and safely queues inactive logs for cleanup when free space drops below 20%.
+
+bind_serial_rotator.py: Automates the incrementing and updating of BIND DNS zone file serial numbers (`YYYYMMDDnn format`) to streamline domain configuration changes and ensure proper version propagation.
+
 🌐 Network Utilities (/networking)
 network_traffic_router.py & regional_server_check.py: Advanced mock mapping tools designed to evaluate multi-region platform accessibility, simulate simple traffic profiles, and verify global network endpoints.
 
