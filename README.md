@@ -15,11 +15,18 @@ sysadmin-automation-library/
 ├── .gitignore         # Prevents local credentials and caches from being tracked
 ├── .env.example       # Template for required environment variables
 ├── README.md          # Project documentation
+├── provisioning/      # User creation, bulk onboarding, and interactive CLI tooling
 ├── security/          # Host protection, authentication parsing, and identity whitelisting
 ├── monitoring/        # System telemetry, storage thresholds, and metric logging
 └── networking/        # Endpoint connectivity checks and data format validation
 
 🚀 Module Deep Dive
+
+👤 User Provisioning & Onboarding (/provisioning)
+
+interactive_provisioner.py (CLI Onboarding Wizard): Guides administrators step-by-step through capturing individual new hire details (first name, last name, department), automatically generates company emails, sets up user accounts, assigns system groups, configures default credentials, and handles home directory creation with robust logging fallback.
+
+provision_users.py (Bulk CSV Ingestion Tool): Processes structured spreadsheet data to rapidly automate the batch creation of multiple user accounts, system groups, and permissions in a single execution run.
 
 🛡️ Security & Identity Auditing (/security)
 server_audit.py (Automated Host Intrusion Alerting): Streams active identity state changes by parsing /etc/passwd. Implements automated system-account filtering logic and hooks into Discord Webhook APIs to instantly trigger real-time host intrusion alerts if an unapproved user bypasses access management profiles.
