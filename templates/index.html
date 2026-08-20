@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ARGUS // Panoptes Core</title>
+    <style>
+        body { 
+            font-family: 'Courier New', Courier, monospace; 
+            background: #08080a; 
+            color: #ffb700; /* Antique Amber / Mythic Gold */
+            margin: 0; 
+            padding: 20px; 
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        /* Top Navigation Bar */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(18, 18, 22, 0.9);
+            border: 1px solid rgba(255, 183, 0, 0.2);
+            padding: 10px 20px;
+            border-radius: 4px;
+        }
+        .brand { font-weight: bold; letter-spacing: 3px; font-size: 1.2em; display: flex; align-items: center; gap: 10px; color: #ffb700; }
+        .online-dot { width: 8px; height: 8px; background: #e56b00; border-radius: 50%; box-shadow: 0 0 8px #e56b00; display: inline-block; }
+        
+        /* Main Layout Grid */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 350px;
+            gap: 20px;
+        }
+        
+        /* Panels */
+        .panel {
+            background: rgba(18, 18, 22, 0.85);
+            border: 1px solid rgba(255, 183, 0, 0.2);
+            border-radius: 4px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        .panel-title {
+            font-size: 0.85em;
+            color: #a0937d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 183, 0, 0.15);
+            padding-bottom: 8px;
+        }
+        
+        /* Metric Bars */
+        .metric-group { margin-bottom: 10px; }
+        .metric-label { display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 5px; color: #ffb700; }
+        .progress-bar { background: #040405; height: 6px; border-radius: 3px; border: 1px solid rgba(255, 183, 0, 0.15); overflow: hidden; }
+        .progress-fill { background: #e56b00; height: 100%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(229, 107, 0, 0.5); }
+
+        /* Center Panoptes Eye View */
+        .center-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 280px;
+        }
+        .arc-reactor {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 183, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: spin 25s linear infinite;
+            box-shadow: 0 0 30px rgba(255, 183, 0, 0.1);
+        }
+        .arc-core {
+            width: 90px;
+            height: 90px;
+            background: rgba(255, 183, 0, 0.08);
+            border-radius: 50%;
+            border: 2px solid #ffb700;
+            box-shadow: 0 0 20px rgba(255, 183, 0, 0.4);
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .core-text { margin-top: 20px; font-weight: bold; letter-spacing: 2px; text-align: center; }
+
+        /* Chat / Conversation Panel */
+        .chat-box {
+            flex: 1;
+            background: #040405;
+            border: 1px solid rgba(255, 183, 0, 0.15);
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 200px;
+        }
+        .chat-input-area { display: flex; gap: 8px; }
+        .chat-input-area input {
+            flex: 1;
+            background: #08080a;
+            border: 1px solid rgba(255, 183, 0, 0.3);
+            color: #ffb700;
+            padding: 8px;
+            font-family: inherit;
+            border-radius: 4px;
+        }
+        .chat-input-area input:focus {
+            outline: none;
+            border-color: #ffb700;
+            box-shadow: 0 0 5px rgba(255, 183, 0, 0.3);
+        }
+        .chat-input-area button {
+            background: transparent;
+            color: #ffb700;
+            border: 1px solid #ffb700;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .chat-input-area button:hover {
+            background: rgba(255, 183, 0, 0.1);
+        }
+        .msg-ai { color: #e56b00; }
+        .msg-user { color: #a0937d; text-align: right; }
+
+        /* Table Styles for Process Watcher */
+        .process-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75em;
+            text-align: left;
+        }
+        .process-table th {
+            color: #a0937d;
+            border-bottom: 1px solid rgba(255, 183, 0, 0.2);
+            padding: 4px;
+        }
+        .process-table td {
+            padding: 4px;
+            border-bottom: 1px solid rgba(255, 183, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <div class="top-nav">
+        <div class="brand"><span class="online-dot"></span> ARGUS // Panoptes Core</div>
+        <div id="live-clock" style="font-size: 0.9em; color: #a0937d;"></div>
+    </div>
+
+    <!-- Main Multi-Panel Grid: Row 1 (Telemetry, Core, Oracle) -->
+    <div class="main-layout">
+        
+        <!-- Left Panel: Oculi Status (Telemetry) -->
+        <div class="panel">
+            <div class="panel-title">Oculi Status (Telemetry)</div>
+            
+            <div class="metric-group">
+                <div class="metric-label"><span>CPU Vigilance</span><span id="cpu-text">{{ data.cpu_usage }}%</span></div>
+                <div class="progress-bar"><div id="cpu-fill" class="progress-fill" style="width: {{ data.cpu_usage }}%;"></div></div>
+            </div>
+
+            <div class="metric-group">
+                <div class="metric-label"><span>Memory Sight</span><span id="mem-text">{{ data.memory_percent }}%</span></div>
+                <div class="progress-bar"><div id="mem-fill" class="progress-fill" style="width: {{ data.memory_percent }}%;"></div></div>
+                <div id="mem-free" style="font-size: 0.75em; color: #a0937d; margin-top: 3px;">Free: {{ data.memory_available }} GB</div>
+            </div>
+
+            <div class="metric-group">
+                <div class="metric-label"><span>Archive Depth</span><span id="disk-text">{{ data.disk_percent }}%</span></div>
+                <div class="progress-bar"><div id="disk-fill" class="progress-fill" style="width: {{ data.disk_percent }}%;"></div></div>
+                <div id="disk-free" style="font-size: 0.75em; color: #a0937d; margin-top: 3px;">Free: {{ data.disk_free }} GB</div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <a href="/" style="display: block; text-align: center; padding: 8px; border: 1px solid rgba(255, 183, 0, 0.4); color: #ffb700; text-decoration: none; border-radius: 4px; font-size: 0.85em;">Refresh Watch</a>
+            </div>
+        </div>
+
+        <!-- Center Stage: Panoptes Eye & Status -->
+        <div class="panel center-stage">
+            <div class="arc-reactor">
+                <div class="arc-core"></div>
+            </div>
+            <div class="core-text">
+                <div style="color: #e56b00; margin-bottom: 5px;">{{ greeting }}, <span id="user-display-name">Watcher</span>.</div>
+                <div style="font-size: 0.8em; color: #a0937d; font-weight: normal;">All eyes open. Vigilance absolute.</div>
+            </div>
+        </div>
+
+        <!-- Right Panel: The Panoptes Oracle (Neural Link) -->
+        <div class="panel">
+            <div class="panel-title">The Panoptes Oracle</div>
+            <div id="chat-output" class="chat-box">
+                <div class="msg-ai">Argus awakened. All hundred eyes fixed upon the system. How may I guide your oversight today?</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="user-prompt" placeholder="Enter directive..." onkeydown="if(event.key === 'Enter') sendToAI()">
+                <button onclick="sendToAI()">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Secondary Grid: Row 2 (Process Watcher & Service Health) -->
+    <div class="main-layout" style="grid-template-columns: 1fr 1fr;">
+        
+        <!-- Active Process Watcher Panel -->
+        <div class="panel">
+            <div class="panel-title">Active Process Watcher</div>
+            <div style="max-height: 180px; overflow-y: auto;">
+                <table class="process-table">
+                    <thead>
+                        <tr>
+                            <th>PID</th>
+                            <th>Name</th>
+                            <th>CPU%</th>
+                            <th>MEM%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="process-list">
+                        <tr><td colspan="4" style="color: #a0937d; text-align: center;">Scanning processes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Service Health Panel -->
+        <div class="panel">
+            <div class="panel-title">Service Health // Argus</div>
+            <div id="service-output" style="background: #040405; border: 1px solid rgba(255, 183, 0, 0.15); padding: 8px; font-size: 0.75em; color: #a0937d; height: 110px; overflow-y: auto;">
+                Checking service status...
+            </div>
+            <button onclick="fetchServiceHealth()" style="background: transparent; color: #ffb700; border: 1px solid #ffb700; padding: 6px; cursor: pointer; border-radius: 4px; font-size: 0.8em; font-weight: bold;">Check Status</button>
+        </div>
+
+    </div>
+
+    <!-- Bottom Panel: Command Subsystem // Terminal Link -->
+    <div class="panel">
+        <div class="panel-title">Command Subsystem // Terminal Link</div>
+        <div id="terminal-output" style="background: #040405; border: 1px solid rgba(255, 183, 0, 0.15); padding: 10px; height: 120px; overflow-y: auto; font-size: 0.8em; color: #e56b00; margin-bottom: 8px;">
+            <div>System ready. Awaiting administrative instruction...</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <span style="color: #ffb700; align-self: center;">root@argus:~#</span>
+            <input type="text" id="terminal-input" placeholder="e.g., uptime, df -h, systemctl status..." style="flex: 1; background: #08080a; border: 1px solid rgba(255, 183, 0, 0.3); color: #ffb700; padding: 6px; font-family: inherit; border-radius: 4px;" onkeydown="if(event.key === 'Enter') executeTerminalCommand()">
+            <button onclick="executeTerminalCommand()" style="background: transparent; color: #ffb700; border: 1px solid #ffb700; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold;">Execute</button>
+        </div>
+    </div>
+
+    <script>
+        // Handle Dynamic User Name Prompt & Storage
+        let userName = localStorage.getItem('argus_user_name');
+        if (!userName || userName.trim() === '') {
+            userName = prompt("Enter operator identity:") || "Watcher";
+            localStorage.setItem('argus_user_name', userName.trim());
+        }
+        document.getElementById('user-display-name').innerText = userName;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString() + ' | ' + now.toLocaleDateString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Poll telemetry endpoint every 3 seconds for live updates
+        async function pollTelemetry() {
+            try {
+                const response = await fetch('/get-telemetry');
+                const data = await response.json();
+                
+                // Update CPU
+                document.getElementById('cpu-text').innerText = data.cpu_usage + '%';
+                document.getElementById('cpu-fill').style.width = data.cpu_usage + '%';
+                
+                // Update Memory
+                document.getElementById('mem-text').innerText = data.memory_percent + '%';
+                document.getElementById('mem-fill').style.width = data.memory_percent + '%';
+                document.getElementById('mem-free').innerText = 'Free: ' + data.memory_available + ' GB';
+                
+                // Update Disk
+                document.getElementById('disk-text').innerText = data.disk_percent + '%';
+                document.getElementById('disk-fill').style.width = data.disk_percent + '%';
+                document.getElementById('disk-free').innerText = 'Free: ' + data.disk_free + ' GB';
+            } catch (err) {
+                console.error("Telemetry sync error:", err);
+            }
+        }
+        setInterval(pollTelemetry, 3000);
+
+        async function sendToAI() {
+            const inputField = document.getElementById('user-prompt');
+            const outputDiv = document.getElementById('chat-output');
+            const prompt = inputField.value.trim();
+            
+            if (!prompt) return;
+            
+            outputDiv.innerHTML += `<div class="msg-user">> ${prompt}</div>`;
+            inputField.value = '';
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            
+            try {
+                const response = await fetch('/ask-ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                const data = await response.json();
+                outputDiv.innerHTML += `<div class="msg-ai">ARGUS: ${data.response}</div>`;
+            } catch (err) {
+                outputDiv.innerHTML += `<div class="msg-ai" style="color: #e56b00;">ARGUS: Vision obscured. Transmission error.</div>`;
+            }
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        // Terminal Command Executor
+        async function executeTerminalCommand() {
+            const inputField = document.getElementById('terminal-input');
+            const outputDiv = document.getElementById('terminal-output');
+            const command = inputField.value.trim();
+            
+            if (!command) return;
+            
+            outputDiv.innerHTML += `<div>root@argus:~# ${command}</div>`;
+            inputField.value = '';
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            
+            try {
+                const response = await fetch('/execute-command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+                const data = await response.json();
+                const formattedOutput = data.output.replace(/\n/g, '<br>');
+                outputDiv.innerHTML += `<div style="color: #a0937d; margin-bottom: 5px;">${formattedOutput}</div>`;
+            } catch (err) {
+                outputDiv.innerHTML += `<div style="color: #ff3333; margin-bottom: 5px;">Execution fault: Connection failed.</div>`;
+            }
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        // Fetch and render top processes
+        async function fetchProcesses() {
+            try {
+                const response = await fetch('/resources');
+                const data = await response.json();
+                
+                const topProcesses = data.processes
+                    .sort((a, b) => b.cpu_percent - a.cpu_percent)
+                    .slice(0, 6);
+                
+                const tbody = document.getElementById('process-list');
+                tbody.innerHTML = '';
+                
+                topProcesses.forEach(p => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${p.pid}</td>
+                            <td style="color: #ffb700;">${p.name}</td>
+                            <td>${p.cpu_percent}%</td>
+                            <td>${p.memory_percent.toFixed(1)}%</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Process fetch error:", err);
+            }
+        }
+        setInterval(fetchProcesses, 5000);
+        fetchProcesses();
+
+        // Fetch service health status
+        async function fetchServiceHealth() {
+            const outputDiv = document.getElementById('service-output');
+            outputDiv.innerHTML = "Querying service state...";
+            try {
+                const response = await fetch('/service-health');
+                const data = await response.json();
+                outputDiv.innerHTML = data.service.replace(/\n/g, '<br>');
+            } catch (err) {
+                outputDiv.innerHTML = "Error querying service health.";
+            }
+        }
+        fetchServiceHealth();
+    </script>
+</body>
+</html>
