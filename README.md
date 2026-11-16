@@ -35,15 +35,16 @@ Located within the `argus-ai/` module, **Auth Sentinel** is a robust automated h
 The toolkit is organized into specialized domain modules to mirror professional production environments:
 
 sysadmin-automation-library/
-├── .gitignore                      # Prevents local credentials and caches from being tracked
-├── .env.example                    # Template for required environment variables (Gemini API, Webhooks)
-├── README.md                       # Project documentation
-├── provisioning/                   # User creation, bulk onboarding, and interactive CLI tooling
-├── security/                       # Host protection, authentication parsing, and identity whitelisting
-├── argus-ai/                       # Auth Sentinel security pipeline, SQLite storage, and core scripts
-├── monitoring/                     # System telemetry, storage thresholds, and metric logging
-├── networking/                     # Endpoint connectivity checks and data format validation
-└── system-health-dashboard/        # Full-stack real-time web monitoring app & ARGUS Panoptes Core
+├── .gitignore                    # Prevents local credentials and caches from being tracked
+├── .env.example                  # Template for required environment variables (Gemini API, Webhooks)
+├── README.md                     # Project documentation
+├── deploy/                       # Ansible infrastructure automation (inventory and playbook)
+├── provisioning/                 # User creation, bulk onboarding, and interactive CLI tooling
+├── security/                     # Host protection, authentication parsing, and identity whitelisting
+├── argus-ai/                     # Auth Sentinel security pipeline, SQLite storage, and core scripts
+├── monitoring/                   # System telemetry, storage thresholds, and metric logging
+├── networking/                   # Endpoint connectivity checks and data format validation
+└── system-health-dashboard/      # Full-stack real-time web monitoring app & ARGUS Panoptes Core
 
 ---
 
@@ -62,12 +63,21 @@ sysadmin-automation-library/
 ### 💾 Infrastructure & Resource Telemetry (`/monitoring` & `/system-health-dashboard`)
 - **System Health Web Dashboard & ARGUS Core (`/system-health-dashboard`):** A full-stack web application built with Flask, `psutil`, and the Gemini API, featuring a responsive dark-themed cyberpunk UI with real-time dynamic telemetry, AI oracle responses, and terminal command execution. Deployed on AWS EC2 using Gunicorn as a production WSGI application server and Nginx as a reverse proxy.
 - **`system_health_report.py` & `disk_space_monitor.py`:** Leverages native OS tracking engines (`shutil`, `psutil`) to calculate partition allocations, memory states, and resource fatigue. Utilizes structured float-formatting to stream clean system warnings directly to communications channels when hardware thresholds cross safety bounds.
-- **`disk_sentinel.py` (Resource Health & Automated Cleanup Sentinel):** Monitors root partition utilization and evaluates target log ages using native OS path and time modules. Safely logs and purges stale operational files when storage thresholds cross critical bounds, utilizing robust try-except error handling for low-overhead production maintenance.
+- **`disk_sentinel.py` (Automated Log Compression & Archival Sentinel):** Scans operational directories (such as `/tmp`), compresses stale uncompressed logs into gzip archives (`.gz`), prunes expired archives past retention thresholds, and pushes real-time Discord webhook telemetry. Automated via native Linux `systemd` services and recurring daily timers.
 - **`uptime_calculator.py` & `bind_serial_rotator.py`:** Tracks host availability profiles and automates the incrementing/updating of BIND DNS zone file serial numbers (`YYYYMMDDnn` format) to streamline domain configuration changes.
 
 ### 🌐 Network Utilities (`/networking`)
 - **`network_traffic_router.py` & `regional_server_check.py`:** Advanced mock mapping tools designed to evaluate multi-region platform accessibility, simulate simple traffic profiles, and verify global network endpoints.
 - **`ping_status_counter.py` & `ip_validator.py`:** Infrastructure utilities to validate system availability across target clusters, handle string validation, and verify structural data formatting for strict IPv4/IPv6 compliance.
+
+---
+
+## 🚀 Infrastructure Deployment & Automation (`/deploy`)
+
+The repository includes a complete Infrastructure-as-Code (IaC) deployment package utilizing **Ansible** to automate server provisioning and service registration.
+
+- **Automated Playbook (`playbook.yml`):** Codifies the end-to-end environment setup. With a single command, it installs core dependencies (`git`, `python3-devel`, `psutil`), initializes Python virtual environments, provisions required packages, deploys systemd service and timer files for both **Auth Sentinel** and **Disk Sentinel**, and starts background automation tasks.
+- **Local/Remote Execution (`inventory.ini`):** Supports local host execution or scalable remote AWS EC2 deployment targets.
 
 ---
 
