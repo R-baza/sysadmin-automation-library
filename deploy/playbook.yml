@@ -1,0 +1,131 @@
+---
+- name: Deploy and Configure Sysadmin Automation Library
+  hosts: sentinel_servers
+  become: yes
+  vars:
+    repo_dir: "/home/ec2-user/sysadmin-automation-library"
+    venv_dir: "/home/ec2-user/sysadmin-automation-library/venv"
+
+  tasks:
+    - name: Ensure Git and Python3 dependencies are installed
+      dnf:
+        name:
+          - git
+          - python3
+          - python3-pip
+          - python3-devel
+        state: present
+
+    - name: Clone or update the sysadmin-automation-library repository
+      git:
+        repo: 'https://github.com/R-baza/sysadmin-automation-library.git'
+        dest: "{{ repo_dir }}"
+        version: main
+        update: yes
+      become_user: ec2-user
+
+    - name: Create Python virtual environment if it doesn't exist
+      command: python3 -m venv "{{ venv_dir }}"
+      args:
+        creates: "{{ venv_dir }}/bin/python"
+      become_user: ec2-user
+
+    - name: Upgrade pip inside virtual environment
+      pip:
+        name: pip
+        state: latest
+        virtualenv: "{{ venv_dir }}"
+      become_user: ec2-user
+
+    - name: Install required Python packages
+      pip:
+        name:
+          - psutil
+          - requests
+          - python-dotenv
+        virtualenv: "{{ venv_dir }}"
+      become_user: ec2-user
+
+    - name: Deploy Auth Sentinel Systemd Service File
+      copy:
+        content: |
+          [Unit]
+          Description=Auth Sentinel SSH Log Monitor Service
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          User=root
+          WorkingDirectory={{ repo_dir }}/security
+          ExecStart={{ venv_dir }}/bin/python {{ repo_dir }}/security/auth_sentinel.py
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/auth-sentinel.service
+        mode: '0644'
+
+    - name: Deploy Auth Sentinel Systemd Timer File
+      copy:
+        content: |
+          [Unit]
+          Description=Run Auth Sentinel Periodically
+
+          [Timer]
+          OnBootSec=5min
+          OnUnitActiveSec=1h
+          Unit=auth-sentinel.service
+
+          [Install]
+          WantedBy=timers.target
+        dest: /etc/systemd/system/auth-sentinel.timer
+        mode: '0644'
+
+    - name: Deploy Disk Sentinel Systemd Service File
+      copy:
+        content: |
+          [Unit]
+          Description=Disk Sentinel Log Compression and Cleanup Service
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          User=root
+          WorkingDirectory={{ repo_dir }}/monitoring
+          ExecStart={{ venv_dir }}/bin/python {{ repo_dir }}/monitoring/disk_sentinel.py
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/disk-sentinel.service
+        mode: '0644'
+
+    - name: Deploy Disk Sentinel Systemd Timer File
+      copy:
+        content: |
+          [Unit]
+          Description=Run Disk Sentinel Daily
+
+          [Timer]
+          OnBootSec=15min
+          OnUnitActiveSec=1d
+          Unit=disk-sentinel.service
+
+          [Install]
+          WantedBy=timers.target
+        dest: /etc/systemd/system/disk-sentinel.timer
+        mode: '0644'
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start auth-sentinel timer
+      systemd:
+        name: auth-sentinel.timer
+        enabled: yes
+        state: started
+
+    - name: Enable and start disk-sentinel timer
+      systemd:
+        name: disk-sentinel.timer
+        enabled: yes
+        state: started
